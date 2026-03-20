@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:   "pg-backup",
 	Short: "Removal and backup of PostgreSQL databases",
 	Long: `This CLI can be used for easy removal and backup of PostgreSQL databases. 
-It supports action on multiple databases in one command and globbind`,
+It supports action on multiple databases in one command and globbing`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 && cmd.Flags().NFlag() == 0 {
 			cmd.Help()
