@@ -1,2 +1,4 @@
 # pg-backup
-PostgreSQL database removal and backup CLI tool
+
+Инструмент командной строки для удаления и резервного копирования баз данных PostgreSQL
+
