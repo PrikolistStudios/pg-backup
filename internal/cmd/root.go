@@ -38,6 +38,7 @@ When removing the database, it is not backed up implicitly. Database backups are
 		conn, err := app.CreateConnection(config)
 		if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Error: failed to connect to database. Check connection parameters.\n")
+			return
 		}
 		defer func(conn *sql.DB) {
 			_ = conn.Close()
@@ -47,7 +48,7 @@ When removing the database, it is not backed up implicitly. Database backups are
 		names, err := app.FilterPatterns(args, conn)
 		var accErr app.ErrAccumulatedErrors
 		if errors.As(err, &accErr) {
-			_, _ = fmt.Fprintf(os.Stderr, "Error occurred with globs:\n%s", accErr)
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while compiling glob patterns:\n%s", accErr)
 		} else if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while fetching databases list: %s", err)
 			return
