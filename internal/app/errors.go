@@ -8,22 +8,26 @@ import (
 
 var ErrBackup = errors.New("database backup error")
 
-type ErrDatabaseAction struct {
-	Err    []error
-	Tables []string
+type ErrAccumulatedErrors struct {
+	Err   []error
+	Items []string
 }
 
-func (e ErrDatabaseAction) Error() string {
-	return fmt.Sprintf("failed to perform action on databases: %s", strings.Join(e.Tables, ","))
+func (e ErrAccumulatedErrors) Error() string {
+	var sb strings.Builder
+	for i, err := range e.Err {
+		sb.WriteString(fmt.Sprintf("%s: %s\n", e.Items[i], err))
+	}
+	return sb.String()
 }
 
-func (e ErrDatabaseAction) Unwrap() []error {
+func (e ErrAccumulatedErrors) Unwrap() []error {
 	return e.Err
 }
 
-func NewErrDatabaseRemoval() ErrDatabaseAction {
-	return ErrDatabaseAction{
-		Err:    make([]error, 0),
-		Tables: make([]string, 0),
+func NewErrAccumulatedErrors() ErrAccumulatedErrors {
+	return ErrAccumulatedErrors{
+		Err:   make([]error, 0),
+		Items: make([]string, 0),
 	}
 }
