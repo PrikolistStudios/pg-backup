@@ -39,15 +39,15 @@ func backupDatabase(name string, config Config) error {
 }
 
 // BackupDatabases When using pgdump the configuration is kept except the database name.
-func BackupDatabases(patterns []string, config Config) error {
+func BackupDatabases(names []string, config Config) error {
 	// Accumulate errors
-	acc := NewErrDatabaseRemoval()
+	acc := NewErrAccumulatedErrors()
 
-	for _, pattern := range patterns {
-		err := backupDatabase(pattern, config)
+	for _, name := range names {
+		err := backupDatabase(name, config)
 		if err != nil {
 			acc.Err = append(acc.Err, ErrBackup)
-			acc.Tables = append(acc.Tables, pattern)
+			acc.Items = append(acc.Items, name)
 		}
 	}
 

@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/PrikolistStudios/pg-backup/internal/app"
 	"github.com/spf13/cobra"
 )
@@ -30,17 +34,53 @@ When removing the database, it is not backed up implicitly. Database backups are
 			return
 		}
 
-		var err error
-		if mode == "backup" {
-			err = app.BackupDatabases(args, config)
-		} else {
-			err = app.RemoveDatabases(args, config)
+		// Connect to db.
+		conn, err := app.CreateConnection(config)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error: failed to connect to database. Check connection parameters.\n")
+			return
+		}
+		defer func(conn *sql.DB) {
+			_ = conn.Close()
+		}(conn)
+
+		// Get valid database names.
+		names, err := app.FilterPatterns(args, conn)
+		var accErr app.ErrAccumulatedErrors
+		if errors.As(err, &accErr) {
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while compiling glob patterns:\n%s", accErr)
+		} else if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while fetching databases list: %s", err)
+			return
 		}
 
+		// List databases and prompt the user to confirm action.
+		var confirm bool
+		prompt := &survey.Confirm{
+			Message: fmt.Sprintf("Perform the action (%s) on the following databases?\n%s\n", mode, strings.Join(names, "\n")),
+			Default: false,
+		}
+		err = survey.AskOne(prompt, &confirm)
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, `Error: %v
+			_, _ = fmt.Fprintln(os.Stderr, "Error confirming action. Aborting.")
+			return
+		} else if !confirm {
+			fmt.Println("Aborting.")
+			return
+		}
 
-Errors were encountered. Check the log for details`, err)
+		fmt.Printf("Performing %s\n", mode)
+
+		// Finally perform the action.
+		if mode == "backup" {
+			err = app.BackupDatabases(names, config)
+		} else {
+			err = app.RemoveDatabases(names, config.ForceRemove, conn)
+		}
+
+		// List databases with unsuccessful action.
+		if errors.As(err, &accErr) {
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while performing action on these databases:\n%s\n\n Check access rights and database existance.", accErr)
 		}
 	},
 }

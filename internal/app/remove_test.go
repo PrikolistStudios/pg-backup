@@ -10,28 +10,30 @@ import (
 
 // It Works test.
 func TestRemoveDatabase(t *testing.T) {
-	conn, _, config, closeFunc := setupContainerConnection(t)
+	conn, _, _, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
 
 	dbname := "test_db_1"
 	createTestDb(dbname, conn)
 
-	require.Contains(t, getDatabases(conn), dbname)
+	dbs, _ := getDatabases(conn)
+	require.Contains(t, dbs, dbname)
 
-	err := RemoveDatabases([]string{dbname}, config)
+	err := RemoveDatabases([]string{dbname}, false, conn)
 	require.NoError(t, err)
 
-	require.NotContains(t, getDatabases(conn), dbname)
+	dbs, _ = getDatabases(conn)
+	require.NotContains(t, dbs, dbname)
 }
 
 // Remove non-existing.
 func TestRemoveNonexisting(t *testing.T) {
-	_, _, config, closeFunc := setupContainerConnection(t)
+	conn, _, _, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
 
 	dbname := "nonexisting"
 
-	err := RemoveDatabases([]string{dbname}, config)
+	err := RemoveDatabases([]string{dbname}, false, conn)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}
@@ -41,11 +43,11 @@ func TestRemoveNonexisting(t *testing.T) {
 
 // Remove non-owned.
 func TestRemoveNoForce(t *testing.T) {
-	db, _, config, closeFunc := setupContainerConnection(t)
+	conn, _, config, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
 
 	// Create a different user.
-	_, err := db.Query(`CREATE ROLE different_superuser WITH
+	_, err := conn.Query(`CREATE ROLE different_superuser WITH
   SUPERUSER
 	LOGIN
 	CREATEDB
@@ -60,7 +62,7 @@ func TestRemoveNoForce(t *testing.T) {
 	// Try remove the database with a connection.
 	dbname := config.Database
 
-	err = RemoveDatabases([]string{dbname}, config)
+	err = RemoveDatabases([]string{dbname}, false, conn)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}
@@ -89,21 +91,22 @@ func TestRemoveWithForce(t *testing.T) {
 	// Try to remove the database with a connection.
 	dbname := config.Database
 
-	// Connect ot different database while removing the other.
+	// Connect to different database while removing the other.
 	config.Database = "postgres"
-
-	err = RemoveDatabases([]string{dbname}, config)
+	newConn, err := CreateConnection(config)
+	err = RemoveDatabases([]string{dbname}, true, newConn)
 	require.NoError(t, err)
-	conn, _ = createConnection(config)
-	require.NotContains(t, getDatabases(conn), dbname)
+
+	dbs, _ := getDatabases(newConn)
+	require.NotContains(t, dbs, dbname)
 }
 
 func TestRemoveNonOwned(t *testing.T) {
-	db, _, config, closeFunc := setupContainerConnection(t)
+	conn, _, config, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
 
 	// Create a different user.
-	_, err := db.Query(`CREATE ROLE different_user WITH 
+	_, err := conn.Query(`CREATE ROLE different_user WITH 
 	LOGIN
 	CREATEDB
 	CONNECTION LIMIT -1
@@ -116,8 +119,8 @@ func TestRemoveNonOwned(t *testing.T) {
 
 	// Should not be owned by this user.
 	dbname := "postgres"
-
-	err = RemoveDatabases([]string{dbname}, config)
+	newConn, err := CreateConnection(config)
+	err = RemoveDatabases([]string{dbname}, false, newConn)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}
