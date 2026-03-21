@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/pkg/errors"
+	_ "github.com/lib/pq"
 )
 
 // ResolvePattern returns valid database names that fit pattern
@@ -12,50 +12,24 @@ func resolvePattern(pattern string) []string {
 	panic("implement me")
 }
 
-// Removes specified database
-func removeDatabase(name string, conn *sql.DB) error {
-	q := fmt.Sprintf("drop database %s;", name)
-	_, err := conn.Query(q)
-	return err
-}
-
-func createConnection(url string) (*sql.DB, error) {
-	conn, err := sql.Open("postgres", url)
+func createConnection(config Config) (*sql.DB, error) {
+	conn, err := sql.Open("postgres", getDsn(config))
 	if err != nil {
-		return nil, errors.Wrap(err, "create connection: ")
+		return nil, fmt.Errorf("create connection: %w", err)
 	}
 
 	// Verify that connection is successful.
 	err = conn.Ping()
 	if err != nil {
-		return nil, errors.Wrap(err, "create connection: ")
+		return nil, fmt.Errorf("create connection: %w", err)
 	}
 
 	return conn, nil
 }
 
-func RemoveDatabases(patterns []string, url string) error {
-	// Connect.
-	conn, err := createConnection(url)
-	if err != nil {
-		return errors.Wrap(err, "Remove Databases: ")
-	}
+func getDsn(config Config) string {
+	res := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		config.Host, config.Port, config.User, config.Password, config.Database)
 
-	defer func(conn *sql.DB) {
-		_ = conn.Close()
-	}(conn)
-
-	// Loop through patterns and resolve each one
-	for _, pattern := range patterns {
-		err = removeDatabase(pattern, conn)
-		if err != nil {
-			return errors.Wrap(err, "Remove Databases: ")
-		}
-	}
-
-	return nil
-}
-
-func BackupDatabases(patterns []string) error {
-	panic("implement me")
+	return res
 }

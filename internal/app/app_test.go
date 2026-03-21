@@ -9,12 +9,11 @@ import (
 
 	"github.com/docker/go-connections/nat"
 	_ "github.com/lib/pq" // To register the driver.
-	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func setupContainerConnection(t *testing.T) (*sql.DB, string, func()) {
+func setupContainerConnection(t *testing.T) (*sql.DB, string, Config, func()) {
 	ctx := context.Background()
 	re := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
@@ -40,6 +39,15 @@ func setupContainerConnection(t *testing.T) (*sql.DB, string, func()) {
 	host, _ := container.Host(ctx)
 	port, _ := container.MappedPort(ctx, "5432")
 	dsn := fmt.Sprintf("host=%s port=%s user=test_user password=test_password dbname=testdb sslmode=disable", host, port.Port())
+
+	config := Config{
+		Host:     host,
+		Port:     port.Port(),
+		Database: "testdb",
+		User:     "test_user",
+		Password: "test_password",
+	}
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Fatal(err)
@@ -49,8 +57,7 @@ func setupContainerConnection(t *testing.T) (*sql.DB, string, func()) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	return db, dsn, func() {
+	return db, dsn, config, func() {
 		db.Close()
 		container.Terminate(ctx)
 	}
@@ -87,23 +94,3 @@ func getDatabases(db *sql.DB) []string {
 
 	return result
 }
-
-// It Works test.
-func TestRemoveDatabase(t *testing.T) {
-	conn, dsn, closeFunc := setupContainerConnection(t)
-	defer closeFunc()
-
-	dbname := "test_db_1"
-	createTestDb(dbname, conn)
-
-	require.Contains(t, getDatabases(conn), dbname)
-
-	err := RemoveDatabases([]string{dbname}, dsn)
-	require.NoError(t, err)
-
-	require.NotContains(t, getDatabases(conn), dbname)
-}
-
-// Remove non-existing.
-
-// Remove non-owned.
