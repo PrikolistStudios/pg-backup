@@ -17,22 +17,8 @@ func removeDatabase(name string, force bool, conn *sql.DB) error {
 	return err
 }
 
-func RemoveDatabases(names []string, force bool, conn *sql.DB) error {
-	// Accumulate errors
-	acc := NewErrAccumulatedErrors()
-
-	// Loop through patterns and resolve each one
-	for _, name := range names {
-		err := removeDatabase(name, force, conn)
-		if err != nil {
-			acc.Err = append(acc.Err, err)
-			acc.Items = append(acc.Items, name)
-		}
+func NewRemoveAction(force bool, conn *sql.DB) DatabaseAction {
+	return func(name string) error {
+		return removeDatabase(name, force, conn)
 	}
-
-	if len(acc.Err) > 0 {
-		return acc
-	}
-
-	return nil
 }

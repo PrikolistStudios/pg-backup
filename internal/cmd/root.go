@@ -72,11 +72,18 @@ When removing the database, it is not backed up implicitly. Database backups are
 		fmt.Printf("Performing %s\n", mode)
 
 		// Finally perform the action.
+		var action app.DatabaseAction
 		if mode == "backup" {
-			err = app.BackupDatabases(names, config)
+			//err = app.BackupDatabases(names, config)
+			action = app.NewBackupAction(config)
+			//err = app.PerformDatabasesAction(names, app.NewBackupAction(config))
 		} else {
-			err = app.RemoveDatabases(names, config.ForceRemove, conn)
+			action = app.NewRemoveAction(config.ForceRemove, conn)
+			//err = app.PerformDatabasesAction(names, app.NewRemoveAction(config.ForceRemove, conn))
+			//err = app.RemoveDatabases(names, config.ForceRemove, conn)
 		}
+
+		err = app.PerformDatabasesAction(names, action)
 
 		// List databases with unsuccessful action.
 		if errors.As(err, &accErr) {

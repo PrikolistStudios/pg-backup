@@ -19,7 +19,8 @@ func TestRemoveDatabase(t *testing.T) {
 	dbs, _ := getDatabases(conn)
 	require.Contains(t, dbs, dbname)
 
-	err := RemoveDatabases([]string{dbname}, false, conn)
+	action := NewRemoveAction(false, conn)
+	err := PerformDatabasesAction([]string{dbname}, action)
 	require.NoError(t, err)
 
 	dbs, _ = getDatabases(conn)
@@ -33,7 +34,8 @@ func TestRemoveNonexisting(t *testing.T) {
 
 	dbname := "nonexisting"
 
-	err := RemoveDatabases([]string{dbname}, false, conn)
+	action := NewRemoveAction(false, conn)
+	err := PerformDatabasesAction([]string{dbname}, action)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}
@@ -62,7 +64,8 @@ func TestRemoveNoForce(t *testing.T) {
 	// Try remove the database with a connection.
 	dbname := config.Database
 
-	err = RemoveDatabases([]string{dbname}, false, conn)
+	action := NewRemoveAction(false, conn)
+	err = PerformDatabasesAction([]string{dbname}, action)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}
@@ -94,7 +97,8 @@ func TestRemoveWithForce(t *testing.T) {
 	// Connect to different database while removing the other.
 	config.Database = "postgres"
 	newConn, err := CreateConnection(config)
-	err = RemoveDatabases([]string{dbname}, true, newConn)
+	action := NewRemoveAction(true, newConn)
+	err = PerformDatabasesAction([]string{dbname}, action)
 	require.NoError(t, err)
 
 	dbs, _ := getDatabases(newConn)
@@ -120,7 +124,8 @@ func TestRemoveNonOwned(t *testing.T) {
 	// Should not be owned by this user.
 	dbname := "postgres"
 	newConn, err := CreateConnection(config)
-	err = RemoveDatabases([]string{dbname}, false, newConn)
+	action := NewRemoveAction(false, newConn)
+	err = PerformDatabasesAction([]string{dbname}, action)
 	require.Error(t, err)
 
 	pqerr := &pq.Error{}

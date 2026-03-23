@@ -17,7 +17,8 @@ func TestBackup(t *testing.T) {
 	dbs, _ := getDatabases(conn)
 	require.Contains(t, dbs, dbname)
 
-	err := BackupDatabases([]string{dbname}, config)
+	action := NewBackupAction(config)
+	err := PerformDatabasesAction([]string{dbname}, action)
 	require.NoError(t, err)
 
 	// Check that dump was created.
@@ -32,7 +33,8 @@ func TestBackupNonexisting(t *testing.T) {
 
 	dbname := "nonexisting"
 
-	err := BackupDatabases([]string{dbname}, config)
+	action := NewBackupAction(config)
+	err := PerformDatabasesAction([]string{dbname}, action)
 	require.Error(t, err)
 	require.NoFileExists(t, dbname+".backup")
 }
