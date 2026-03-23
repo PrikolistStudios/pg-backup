@@ -29,3 +29,12 @@ func TestBrokenGlob(t *testing.T) {
 	require.Error(t, err)
 	//require.ElementsMatch(t, db_names, filtered)
 }
+
+func TestNoMatches(t *testing.T) {
+	conn, _, _, closeFunc := setupContainerConnection(t)
+	defer closeFunc()
+
+	filtered, err := FilterPatterns([]string{"test_db_*"}, conn)
+	require.Len(t, filtered, 0)
+	require.ErrorIs(t, err, ErrNoMatch)
+}

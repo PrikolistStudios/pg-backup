@@ -58,8 +58,8 @@ func setupContainerConnection(t *testing.T) (*sql.DB, string, Config, func()) {
 		t.Fatal(err)
 	}
 	return db, dsn, config, func() {
-		db.Close()
-		container.Terminate(ctx)
+		_ = db.Close()
+		_ = container.Terminate(ctx)
 	}
 }
 
@@ -71,26 +71,3 @@ func createTestDb(name string, db *sql.DB) {
 		panic(err)
 	}
 }
-
-// Gets all database names on server (?).
-//func getDatabases(db *sql.DB) []string {
-//	rows, err := db.Query("SELECT datname FROM pg_database;")
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	defer func(rows *sql.Rows) {
-//		_ = rows.Close()
-//	}(rows)
-//
-//	var result []string
-//	for rows.Next() {
-//		var name string
-//		if err := rows.Scan(&name); err != nil {
-//			panic(err)
-//		}
-//		result = append(result, name)
-//	}
-//
-//	return result
-//}
