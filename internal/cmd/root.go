@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//go:embed long-description.txt
+var longDescription string
 var config = app.NewConfig()
 var mode = "backup"
 
@@ -19,15 +22,8 @@ var mode = "backup"
 var rootCmd = &cobra.Command{
 	Use:   "pg-backup [arguments...]",
 	Short: "Removal and backup of PostgreSQL databases",
-	Long: `This CLI tool is used for easy removal and backup of PostgreSQL databases. 
-It supports action on multiple databases in one command and globbing
-
-Each argument is considered a glob pattern, and the user must have necessary rights to perform an action on databases which 
-names match it (read to backup, drop to remove).
-
-When removing the database, it is not backed up implicitly. Database backups are stored in working directory.
-`,
-	Args: cobra.MinimumNArgs(1),
+	Long:  longDescription,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if mode != "backup" && mode != "remove" {
 			_, _ = fmt.Fprintf(os.Stderr, "Error: --mode must be either 'backup' or 'remove'\n")

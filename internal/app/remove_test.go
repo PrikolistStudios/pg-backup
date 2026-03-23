@@ -128,7 +128,6 @@ func TestRemoveNonOwned(t *testing.T) {
 	require.NoError(t, err)
 	action := NewRemoveAction(false, newConn)
 	err = PerformDatabasesAction([]string{dbname}, action)
-	require.Error(t, err)
 
 	pqerr := &pq.Error{}
 	require.ErrorAs(t, err, &pqerr)
