@@ -19,11 +19,11 @@ It supports action on multiple databases in one command and globbing
 Each argument is considered a glob pattern, and the user must have necessary rights to perform an action on databases which
 names match it (read to back up, drop to remove). Be aware that glob gets expanded to commandline arguments before the program is launched, so running:
 
-pg-backup test_db* 
+pg-backup test_db*
 
 might lead to unexpected results if you have matching files in working directory.
 
-When removing the database, it is not backed up implicitly. Database backups are stored in working directory and made with pg-dump.
+When removing the database, it is not backed up implicitly. Database backups are stored in working directory and made with pg-dump, using the credentials provided in the flags.
 
 Glob pattern syntax is as follows:
 
@@ -49,6 +49,19 @@ character-range:
 pattern-list:
     pattern { `,` pattern }
                 comma-separated (without spaces) patterns
+
+Usage:
+  pg-backup [arguments...] [flags]
+
+Flags:
+  -d, --database string   Database to connect to while performing removal (default "postgres")
+  -f, --force             Remove database even if it has active connections
+  -h, --help              help for pg-backup
+  -H, --host string       Database server host (default "localhost")
+  -m, --mode string       Action performed on database. Can be either 'backup' of 'remove' (default "backup")
+  -P, --password string   User password (default "postgres")
+  -p, --port string       Database server port (default "5432")
+  -U, --user string       Database user (default "postgres")
 ```
 
 ## Пример

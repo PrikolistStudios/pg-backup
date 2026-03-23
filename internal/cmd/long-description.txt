@@ -8,7 +8,7 @@ pg-backup test_db*
 
 might lead to unexpected results if you have matching files in working directory.
 
-When removing the database, it is not backed up implicitly. Database backups are stored in working directory and made with pg-dump.
+When removing the database, it is not backed up implicitly. Database backups are stored in working directory and made with pg-dump, using the credentials provided in the flags.
 
 Glob pattern syntax is as follows:
 
