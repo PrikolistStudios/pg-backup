@@ -72,3 +72,31 @@ Performing backup
 Для сборки требуется только Go
 
 Для тестирования понадобится Docker, потому что тесты поднимают временные контейнеры.
+
+## Проверка
+
+Для удобства проверки я также опишу API пакетов, чтобы было легче вникнуть в код
+
+### [prog/main.go](prog/main.go)
+
+Запуск приложения [Cobra](https://github.com/spf13/cobra).
+
+### [internal/cmd/root.go](internal/cmd/root.go):
+
+Описания и флагов команды, обработка аргументов командной строки.
+
+### [internal/app](internal/app):
+
+Основная логика приложения. В целом она такая: по списку паттернов получается через `FilterPatterns` список доступных
+бд. Потом создается "действие" `DatabaseAction`, которое будет осуществляться `PerformDatabasesAction` над подошедшими
+под паттерны бд. Все действия производятся параллельно через горутины.
+
+- [app.go](internal/app/app.go): `PerformDatabasesAction` осуществляет действие над группой баз данных (удаление или
+  резервное копирование)
+- [remove.go](internal/app/remove.go): `NewRemoveAction` создает `DatabaseAction`, которое удалит названную базу данных.
+- [backup.go](internal/app/backup.go): `NewBackupAction` создает `DatabaseAction`, которое создаст резервную копию
+  переданной базы данных.
+- [connection.go](internal/app/connection.go): `CreateConnection` создает соединение с бд, которое понадобится для
+  получения списка всех баз данных, а также для удаления баз данных.
+- [filter.go](internal/app/filter.go): `FilterPatterns` по списку паттернов возвращает список подошедших бд.
+- [config.go](internal/app/config.go) и [errors.go](internal/app/errors.go) объявляют вспомогательные структуры.
