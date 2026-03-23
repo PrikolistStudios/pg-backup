@@ -22,10 +22,10 @@ var rootCmd = &cobra.Command{
 	Long: `This CLI tool is used for easy removal and backup of PostgreSQL databases. 
 It supports action on multiple databases in one command and globbing
 
-Each argument should be the database name, and the user must have necessary rights to perform an action on it 
-(read to backup, drop to remove). Argument can also be a glob string to remove many databases.
+Each argument is considered a glob pattern, and the user must have necessary rights to perform an action on databases which 
+names match it (read to backup, drop to remove).
 
-When removing the database, it is not backed up implicitly. Database backups are stored in current working directory.
+When removing the database, it is not backed up implicitly. Database backups are stored in working directory.
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -46,11 +46,16 @@ When removing the database, it is not backed up implicitly. Database backups are
 
 		// Get valid database names.
 		names, err := app.FilterPatterns(args, conn)
-		var accErr app.ErrAccumulatedErrors
-		if errors.As(err, &accErr) {
-			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while compiling glob patterns:\n%s", accErr)
+		var globErr app.ErrAccumulatedErrors
+		if errors.As(err, &globErr) {
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while resolving glob patterns:\n%s", globErr)
 		} else if err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while fetching databases list: %s", err)
+			return
+		}
+
+		if len(names) == 0 {
+			fmt.Println("No databases found. Aborting.")
 			return
 		}
 
@@ -60,6 +65,7 @@ When removing the database, it is not backed up implicitly. Database backups are
 			Message: fmt.Sprintf("Perform the action (%s) on the following databases?\n%s\n", mode, strings.Join(names, "\n")),
 			Default: false,
 		}
+
 		err = survey.AskOne(prompt, &confirm)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, "Error confirming action. Aborting.")
@@ -74,20 +80,17 @@ When removing the database, it is not backed up implicitly. Database backups are
 		// Finally perform the action.
 		var action app.DatabaseAction
 		if mode == "backup" {
-			//err = app.BackupDatabases(names, config)
 			action = app.NewBackupAction(config)
-			//err = app.PerformDatabasesAction(names, app.NewBackupAction(config))
 		} else {
 			action = app.NewRemoveAction(config.ForceRemove, conn)
-			//err = app.PerformDatabasesAction(names, app.NewRemoveAction(config.ForceRemove, conn))
-			//err = app.RemoveDatabases(names, config.ForceRemove, conn)
 		}
 
 		err = app.PerformDatabasesAction(names, action)
 
 		// List databases with unsuccessful action.
-		if errors.As(err, &accErr) {
-			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while performing action on these databases:\n%s\n\n Check access rights and database existance.", accErr)
+		var dbErr app.ErrAccumulatedErrors
+		if errors.As(err, &dbErr) {
+			_, _ = fmt.Fprintf(os.Stderr, "Error occurred while performing action on these databases:\n%s\n\n Check access rights and database existence.", globErr)
 		}
 	},
 }

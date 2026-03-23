@@ -7,6 +7,8 @@ import (
 	"github.com/gobwas/glob"
 )
 
+var ErrNoMatch = fmt.Errorf("pattern did not have any matches")
+
 func getDatabases(conn *sql.DB) ([]string, error) {
 	rows, err := conn.Query("SELECT datname FROM pg_database;")
 	if err != nil {
@@ -49,10 +51,17 @@ func FilterPatterns(patterns []string, conn *sql.DB) ([]string, error) {
 			continue
 		}
 
+		matched := false
 		for _, db := range databases {
 			if gb.Match(db) {
 				set[db] = struct{}{}
+				matched = true
 			}
+		}
+
+		if !matched {
+			acc.Items = append(acc.Items, pattern)
+			acc.Err = append(acc.Err, ErrNoMatch)
 		}
 	}
 

@@ -1,12 +1,9 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
-
-var ErrBackup = errors.New("database backup error")
 
 type ErrAccumulatedErrors struct {
 	Err   []error

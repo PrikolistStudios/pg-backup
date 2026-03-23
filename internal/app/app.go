@@ -11,8 +11,18 @@ func PerformDatabasesAction(names []string, action DatabaseAction) error {
 	// Accumulate errors
 	acc := NewErrAccumulatedErrors()
 
+	errChan := make(chan error, len(names))
+
+	// Launch each action concurrently.
 	for _, name := range names {
-		err := action(name)
+		go func() {
+			errChan <- action(name)
+		}()
+	}
+
+	// Gather errors
+	for _, name := range names {
+		err := <-errChan
 		if err != nil {
 			acc.Err = append(acc.Err, err)
 			acc.Items = append(acc.Items, name)
