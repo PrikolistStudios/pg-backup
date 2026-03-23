@@ -1,0 +1,36 @@
+This CLI tool is used for easy removal and backup of PostgreSQL databases.
+It supports action on multiple databases in one command and globbing
+
+Each argument is considered a glob pattern, and the user must have necessary rights to perform an action on databases which
+names match it (read to back up, drop to remove). Be aware that glob gets expanded to commandline arguments before the program is launched, so running:
+
+pg-backup test_db*
+
+might lead to unexpected results if you have matching files in working directory.
+
+When removing the database, it is not backed up implicitly. Database backups are stored in working directory and made with pg-dump.
+
+Glob pattern syntax is as follows:
+
+pattern:
+    { term }
+
+term:
+    `*`         matches any sequence of non-separator characters
+    `**`        matches any sequence of characters
+    `?`         matches any single non-separator character
+    `[` [ `!` ] { character-range } `]`
+                character class (must be non-empty)
+    `{` pattern-list `}`
+                pattern alternatives
+    c           matches character c (c != `*`, `**`, `?`, `\`, `[`, `{`, `}`)
+    `\` c       matches character c
+
+character-range:
+    c           matches character c (c != `\\`, `-`, `]`)
+    `\` c       matches character c
+    lo `-` hi   matches character c for lo <= c <= hi
+
+pattern-list:
+    pattern { `,` pattern }
+                comma-separated (without spaces) patterns
