@@ -97,6 +97,7 @@ func TestRemoveWithForce(t *testing.T) {
 	// Connect to different database while removing the other.
 	config.Database = "postgres"
 	newConn, err := CreateConnection(config)
+	require.NoError(t, err)
 	action := NewRemoveAction(true, newConn)
 	err = PerformDatabasesAction([]string{dbname}, action)
 	require.NoError(t, err)
@@ -124,6 +125,7 @@ func TestRemoveNonOwned(t *testing.T) {
 	// Should not be owned by this user.
 	dbname := "postgres"
 	newConn, err := CreateConnection(config)
+	require.NoError(t, err)
 	action := NewRemoveAction(false, newConn)
 	err = PerformDatabasesAction([]string{dbname}, action)
 	require.Error(t, err)

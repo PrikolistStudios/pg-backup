@@ -58,8 +58,8 @@ func setupContainerConnection(t *testing.T) (*sql.DB, string, Config, func()) {
 		t.Fatal(err)
 	}
 	return db, dsn, config, func() {
-		db.Close()
-		container.Terminate(ctx)
+		_ = db.Close()
+		_ = container.Terminate(ctx)
 	}
 }
 
