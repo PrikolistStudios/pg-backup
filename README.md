@@ -68,7 +68,7 @@ Flags:
 ## Пример
 
 ```text
-pg-backup test_db_* -P 1234 -U my-user -m backup
+$ pg-backup test_db_* -P 1234 -U my-user -m backup
 ? Perform the action (backup) on the following databases?
 test_db_1
 test_db_2
