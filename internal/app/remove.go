@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// Removes specified database
 func removeDatabase(name string, force bool, conn *sql.DB) error {
 	q := ""
 	if force {

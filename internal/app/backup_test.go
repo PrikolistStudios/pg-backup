@@ -26,7 +26,6 @@ func TestBackup(t *testing.T) {
 	_ = os.Remove(dbname + ".backup")
 }
 
-// Backup non-existing.
 func TestBackupNonexisting(t *testing.T) {
 	_, _, config, closeFunc := setupContainerConnection(t)
 	defer closeFunc()

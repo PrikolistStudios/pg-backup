@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// It Works test.
 func TestRemoveDatabase(t *testing.T) {
 	conn, _, _, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
@@ -27,7 +26,6 @@ func TestRemoveDatabase(t *testing.T) {
 	require.NotContains(t, dbs, dbname)
 }
 
-// Remove non-existing.
 func TestRemoveNonexisting(t *testing.T) {
 	conn, _, _, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
@@ -43,7 +41,6 @@ func TestRemoveNonexisting(t *testing.T) {
 	require.Equal(t, pqerr.Code, pqerror.InvalidCatalogName)
 }
 
-// Remove non-owned.
 func TestRemoveNoForce(t *testing.T) {
 	conn, _, config, closeFunc := setupContainerConnection(t)
 	defer closeFunc()
