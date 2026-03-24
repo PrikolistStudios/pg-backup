@@ -60,7 +60,6 @@ func FilterPatterns(patterns []string, conn *sql.DB) ([]string, error) {
 		}
 
 		if !matched {
-			fmt.Println(pattern)
 			acc.Items = append(acc.Items, pattern)
 			acc.Err = append(acc.Err, ErrNoMatch)
 		}
